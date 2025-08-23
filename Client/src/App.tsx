@@ -1,62 +1,58 @@
+import { Suspense, lazy } from "react";
+import { Link, NavLink, Route, Routes } from "react-router-dom";
 import "./App.css";
-import React from "react";
+import { useAuth } from "./auth/AuthContext";
 
-function App() {
-  const email = "email@email.com";
-  const password = "password";
-  const name = "name";
+// code-split pages
+const HomePage = lazy(() => import("./pages/HomePage"));
+const ApiPage = lazy(() => import("./pages/ApiPage"));
+const FlashcardsPage = lazy(() => import("./pages/FlashcardsPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
-  const register = async (email: string, password: string, name: string) => {
-    const res = await fetch("http://localhost:4000/app/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name }),
-    });
-    const { token, user } = await res.json();
-
-    localStorage.setItem("token", token);
-    console.log("registered user:", user);
-  };
-
-  const login = async (email: string, password: string) => {
-    const res = await fetch("http://localhost:4000/app/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const { token, user } = await res.json();
-
-    localStorage.setItem("token", token);
-    console.log("logged in user:", user);
-  };
-
+export default function App() {
+  const { user, logout } = useAuth();
   return (
-    <div className="h-screen bg-zinc-50 flex flex-col">
+    <div className="min-h-screen flex flex-col bg-zinc-50">
+      {/* Header / Nav */}
       <div className="sticky top-0 bg-yellow-100 shadow p-2 px-10 items-center flex w-full h-16 justify-between">
         <div>
-          <h1 className="text-xl font-bold"></h1>
+          <NavLink to="/" className="text-xl font-bold">
+            Flashcards
+          </NavLink>
         </div>
-        <div className="flex gap-3">
-          <button
-            className="hover:bg-zinc-300 px-2 py-1 cursor-pointer"
-            onClick={() => register(email, password, name)}
+        <div className="flex gap-3 items-center">
+          <NavLink
+            to="/api"
+            className="hover:bg-yellow-50 px-2 py-1 cursor-pointer"
           >
             API
-          </button>
-          <button
-            className="hover:bg-zinc-300 px-2 py-1 cursor-pointer"
-            onClick={() => login(email, password)}
+          </NavLink>
+          <NavLink
+            className="hover:bg-yellow-50 px-2 py-1 cursor-pointer"
+            to="/flashcards"
           >
-            Study
-          </button>
-          <button className="bg-yellow-50 border hover:bg-yellow-200 px-2 py-1 rounded-lg border-zinc-200 cursor-pointer">
-            email@email.com
+            Flashcards
+          </NavLink>
+          <button
+            className="bg-yellow-50 border hover:bg-yellow-200 px-2 py-1 rounded-lg border-zinc-200 cursor-pointer"
+            onClick={logout}
+          >
+            {user?.email ?? "Login/Register"}
           </button>
         </div>
       </div>
-      <div className="flex-1 h-full bg-yellow-50"></div>
+
+      {/* Routes */}
+      <main className="flex-1 bg-yellow-50">
+        <Suspense fallback={<p>Loading…</p>}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/api" element={<ApiPage />} />
+            <Route path="/flashcards" element={<FlashcardsPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </main>
     </div>
   );
 }
-
-export default App;

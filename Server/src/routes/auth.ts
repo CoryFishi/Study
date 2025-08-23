@@ -1,8 +1,8 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import { User } from "../models/User";
 import { signToken } from "../middleware/token";
+import { requireAuth } from "../middleware/auth";
 
 const authRouter = express.Router();
 
@@ -54,6 +54,25 @@ authRouter.post("/login", async (req, res) => {
   res.json({
     token,
     user: { id: user._id, email: user.email, name: user.name },
+  });
+});
+
+authRouter.get("/profile", requireAuth, async (req, res) => {
+  const userId = (req as any).user.id;
+  const user = await User.findById(userId)
+    .select("_id email name createdAt")
+    .lean();
+  if (!user)
+    return res
+      .status(404)
+      .json({ code: "NOT_FOUND", message: "User not found" });
+  res.json({
+    user: {
+      id: String(user._id),
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt,
+    },
   });
 });
 

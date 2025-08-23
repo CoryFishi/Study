@@ -1,21 +1,28 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import express from "express";
-import { apiRouter } from "./routes/api";
-import { appRouter } from "./routes/app";
-import { connectMongo } from "./db/connection";
 import cors from "cors";
-dotenv.config();
+import { connectMongo } from "./db/connection";
+import authRouter from "./routes/auth";
+import { requireAuth } from "./middleware/auth";
+import { appRouter } from "./routes/app";
+import { apiRouter } from "./routes/api";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
-app.use(cors());
+
 app.use(express.json());
 
-// Customer-facing API
-app.use("/api", apiRouter);
+// allow your Vite app to call the API
+app.use(cors({ origin: "http://localhost:5173" }));
 
-// Internal app API
-app.use("/app", appRouter);
+// Public auth endpoints (register/login + /me guarded inside router)
+app.use("/app/auth", authRouter);
+
+// Internal app API (protected)
+app.use("/app", requireAuth, appRouter);
+
+// Customer-facing API (unprotected for now)
+app.use("/api", apiRouter);
 
 async function start() {
   await connectMongo();
