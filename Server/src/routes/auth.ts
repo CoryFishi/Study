@@ -5,6 +5,16 @@ import { signToken } from "../middleware/token";
 import { requireAuth } from "../middleware/auth";
 
 const authRouter = express.Router();
+const COOKIE_NAME = "token";
+const isProd = process.env.NODE_ENV === "production";
+
+const cookieOpts = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+} as const;
 
 // POST /app/auth/register
 authRouter.post("/register", async (req, res) => {
@@ -13,7 +23,6 @@ authRouter.post("/register", async (req, res) => {
     return res
       .status(400)
       .json({ code: "BAD_INPUT", message: "email & password required" });
-
   const exists = await User.findOne({ email });
   if (exists)
     return res
@@ -24,26 +33,25 @@ authRouter.post("/register", async (req, res) => {
   const user = await User.create({ email, passwordHash, name });
 
   const token = signToken({ sub: String(user._id), email: user.email });
+  res.cookie(COOKIE_NAME, token, cookieOpts);
   res.json({
-    token,
-    user: { id: user._id, email: user.email, name: user.name },
+    user: {
+      id: String(user._id),
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt,
+    },
   });
 });
 
 // POST /app/auth/login
 authRouter.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password)
-    return res
-      .status(400)
-      .json({ code: "BAD_INPUT", message: "email & password required" });
-
   const user = await User.findOne({ email });
   if (!user)
     return res
       .status(401)
       .json({ code: "INVALID_LOGIN", message: "Invalid credentials" });
-
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok)
     return res
@@ -51,9 +59,14 @@ authRouter.post("/login", async (req, res) => {
       .json({ code: "INVALID_LOGIN", message: "Invalid credentials" });
 
   const token = signToken({ sub: String(user._id), email: user.email });
+  res.cookie(COOKIE_NAME, token, cookieOpts);
   res.json({
-    token,
-    user: { id: user._id, email: user.email, name: user.name },
+    user: {
+      id: String(user._id),
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt,
+    },
   });
 });
 
@@ -74,6 +87,15 @@ authRouter.get("/profile", requireAuth, async (req, res) => {
       createdAt: user.createdAt,
     },
   });
+});
+
+authRouter.post("/logout", (_req, res) => {
+  res.clearCookie(COOKIE_NAME, {
+    path: "/",
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd,
+  });
+  res.json({ ok: true });
 });
 
 export default authRouter;

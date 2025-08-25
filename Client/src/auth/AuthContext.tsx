@@ -65,7 +65,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await authFetch(`${API}/app/auth/profile`);
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/app/auth/profile`,
+        {
+          credentials: "include",
+        }
+      );
       const data = await res.json().catch(() => ({}));
       if (!res.ok)
         throw new Error(data?.message || `Profile failed (${res.status})`);
@@ -80,10 +85,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login: AuthCtx["login"] = async (email, password) => {
     setError(null);
-    const res = await fetch(`${API}/app/auth/login`, {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE}/app/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
+      credentials: "include",
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data?.token)
@@ -106,7 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user as User);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await fetch(`${import.meta.env.VITE_API_BASE}/app/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
     setToken(null);
     setUser(null);
     setError(null);

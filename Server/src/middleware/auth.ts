@@ -1,23 +1,18 @@
+// middleware/auth.ts
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { verifyToken } from "./token";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const auth = req.header("authorization") || "";
-  const [, token] = auth.split(" "); // "Bearer <token>"
-  console.log(token);
+  const cookieToken = (req as any).cookies?.token as string | undefined;
+  const token = cookieToken;
+
   if (!token)
-    return res.status(401).json({
-      code: "NO_TOKEN",
-      message: "Authorization: Bearer <token> required",
-    });
+    return res
+      .status(401)
+      .json({ code: "NO_TOKEN", message: "Login required" });
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as {
-      sub: string;
-      email: string;
-    };
+    const payload = verifyToken(token);
     (req as any).user = { id: payload.sub, email: payload.email };
     next();
   } catch {

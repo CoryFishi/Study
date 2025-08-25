@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { connectMongo } from "./db/connection";
 import authRouter from "./routes/auth";
 import { requireAuth } from "./middleware/auth";
@@ -11,9 +12,15 @@ const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
 app.use(express.json());
+app.use(cookieParser());
 
 // allow your Vite app to call the API
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true, // <-- allow cookies to be sent
+  })
+);
 
 // Public auth endpoints (register/login + /me guarded inside router)
 app.use("/app/auth", authRouter);
