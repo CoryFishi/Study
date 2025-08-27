@@ -1,9 +1,10 @@
 import { Suspense, lazy, useState } from "react";
-import { Link, NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { useAuth } from "./auth/AuthContext";
 import UserSettingsPage from "./pages/UserSettingsPage";
 import QuizesPage from "./pages/QuizesPage";
+import QuizPage from "./pages/QuizPage";
 
 // code-split pages
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -22,7 +23,7 @@ export default function App() {
       <div className="sticky top-0 bg-yellow-100 shadow p-2 px-10 items-center flex w-full h-16 justify-between">
         <div>
           <NavLink to="/" className="text-xl font-bold">
-            Flashcards
+            Study Buddy
           </NavLink>
         </div>
         <div className="flex gap-3 items-center">
@@ -40,9 +41,9 @@ export default function App() {
           </NavLink>
           <NavLink
             className="hover:bg-yellow-50 px-2 py-1 cursor-pointer"
-            to="/quizes"
+            to="/quizzes"
           >
-            Quizes
+            Quizzes
           </NavLink>
           <div
             className="relative select-none"
@@ -89,11 +90,12 @@ export default function App() {
       <main className="flex flex-1 bg-yellow-50">
         <Suspense fallback={<p>Loading…</p>}>
           <Routes>
+            <Route path="/quizzes/:id" element={<QuizPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/api" element={<ApiPage />} />
             <Route path="/user-settings" element={<UserSettingsPage />} />
             <Route path="/flashcards" element={<FlashcardsPage />} />
-            <Route path="/quizes" element={<QuizesPage />} />
+            <Route path="/quizzes" element={<QuizesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

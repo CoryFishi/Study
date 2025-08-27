@@ -14,15 +14,14 @@ const PORT = Number(process.env.PORT) || 4000;
 app.use(express.json());
 app.use(cookieParser());
 
-// allow your Vite app to call the API
 app.use(
   cors({
     origin: "http://localhost:5173",
-    credentials: true, // <-- allow cookies to be sent
+    credentials: true,
   })
 );
 
-// Public auth endpoints (register/login + /me guarded inside router)
+// Public auth endpoints (register/login + /profile guarded inside router)
 app.use("/app/auth", authRouter);
 
 // Internal app API (protected)
